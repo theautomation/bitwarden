@@ -1,0 +1,22 @@
+---
+kind: pipeline
+name: validate
+
+steps:
+  - name: superlinter
+    image: github/super-linter:latest
+    environment:
+      RUN_LOCAL: true
+    commands:
+      - github/super-linter
+
+  - name: yamllint
+    image: sdesbure/yamllint:latest
+    commands:
+      - yamllint -c ./.yamllint .
+
+  - name: docker-compose
+    image: tmaier/docker-compose:latest
+    commands:
+      - mv prd-bitwaren-app.env.example prd-bitwaren-app.env
+      - docker-compose config -q

@@ -1,0 +1,25 @@
+version: '3.7'
+services:
+
+  prd-bitwarden-app:
+    image: bitwardenrs/server:latest
+    container_name: prd-bitwarden-app
+    restart: always
+    env_file: prd-bitwarden-app.env
+    ports:
+      - 81:80
+      - 3012:3012
+    networks:
+      home-services:
+    volumes:
+      - ./data:/data
+
+# NETWORKS
+networks:
+
+  home-services:
+    driver: bridge
+    name: home-services
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
