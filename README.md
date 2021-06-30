@@ -4,3 +4,5 @@
 ![GitHub repo size](https://img.shields.io/github/repo-size/theautomation/bitwarden?logo=Github)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/y/theautomation/bitwarden?logo=github)
 ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/theautomation/bitwarden/main?logo=github)
+
+[Bitwarden](https://bitwarden.com/): offers the easiest and safest way for teams and individuals to store and share sensitive data from any device.
