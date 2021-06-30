@@ -3,13 +3,6 @@ kind: pipeline
 name: validate
 
 steps:
-  - name: superlinter
-    image: github/super-linter:latest
-    environment:
-      RUN_LOCAL: true
-    commands:
-      - github/super-linter
-
   - name: yamllint
     image: sdesbure/yamllint:latest
     commands:
