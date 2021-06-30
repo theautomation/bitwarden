@@ -1,4 +1,4 @@
-# bitwarden
+# Bitwarden
 
 [![Build Status](https://drone.theautomation.nl/api/badges/theautomation/bitwarden/status.svg?ref=refs/heads/main)](https://drone.theautomation.nl/theautomation/bitwarden)
 ![GitHub repo size](https://img.shields.io/github/repo-size/theautomation/bitwarden?logo=Github)
