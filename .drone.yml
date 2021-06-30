@@ -11,5 +11,25 @@ steps:
   - name: docker-compose
     image: tmaier/docker-compose:latest
     commands:
-      - mv prd-bitwarden-app.env.example prd-bitwarden-app.env
+      - mv prd-${DRONE_REPO_NAME}-app.env.example prd-${DRONE_REPO_NAME}-app.env
       - docker-compose config -q
+      
+---
+kind: pipeline
+type: docker
+name: build
+
+depends_on:
+  - validate
+
+steps:
+  - name: publish
+    image: plugins/docker
+    settings:
+      username:
+        from_secret: docker-registry-username
+      password:
+        from_secret: docker-registry-password
+      registry: docker-registry.theautomation.nl
+      repo: docker-registry.theautomation.nl/coen/prd-${DRONE_REPO_NAME}-app
+      auto_tag: true
