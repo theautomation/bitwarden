@@ -11,5 +11,5 @@ steps:
   - name: docker-compose
     image: tmaier/docker-compose:latest
     commands:
-      - mv prd-bitwaren-app.env.example prd-bitwaren-app.env
+      - mv prd-bitwarden-app.env.example prd-bitwarden-app.env
       - docker-compose config -q
