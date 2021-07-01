@@ -1,0 +1,1 @@
+FROM bitwardenrs/server:latest

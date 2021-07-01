@@ -33,3 +33,51 @@ steps:
       registry: docker-registry.theautomation.nl
       repo: docker-registry.theautomation.nl/coen/prd-${DRONE_REPO_NAME}-app
       auto_tag: true
+
+---
+kind: pipeline
+type: docker
+name: upgrade
+
+depends_on:
+  - build
+
+steps:
+  - name: upgrade
+    image: appleboy/drone-ssh
+    settings:
+      host: 192.168.1.3
+      username: coen
+      password:
+        from_secret: ssh_password
+      port: 22
+      script:
+        - cd /home/coen/docker-home-services/${DRONE_REPO_NAME}/
+        - git pull
+        - docker-compose pull
+
+  - name: deploy
+    image: appleboy/drone-ssh
+    settings:
+      host: 192.168.1.3
+      username: coen
+      password:
+        from_secret: ssh_password
+      port: 22
+      script:
+        - cd /home/coen/docker-home-services/${DRONE_REPO_NAME}/
+        - docker-compose up -d
+
+  - name: clean
+    image: appleboy/drone-ssh
+    settings:
+      host:
+        from_secret: ssh_host
+      username:
+        from_secret: ssh_user
+      password:
+        from_secret: ssh_password
+      port: 22
+      script:
+        - cd /home/coen/docker-home-services/${DRONE_REPO_NAME}/
+        - docker image prune -f
