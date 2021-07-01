@@ -3,7 +3,7 @@ version: '3.8'
 services:
 
   prd-bitwarden-app:
-    image: docker-registry.theautomation.nl/coen/prd-adguard-home-app:latest
+    image: docker-registry.theautomation.nl/coen/prd-bitwarden-app:latest
     container_name: prd-bitwarden-app
     restart: always
     env_file: prd-bitwarden-app.env
