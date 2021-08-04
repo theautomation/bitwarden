@@ -1,1 +1,1 @@
-FROM vaultwarden/server:1.22.1
+FROM vaultwarden/server:1.22.2
