@@ -8,16 +8,10 @@ services:
     restart: always
     env_file: prd-bitwarden-app.env
     networks:
-      home-services:
+      - reverse-proxy
     volumes:
       - ./data:/data
 
-# NETWORKS
 networks:
-
-  home-services:
-    driver: bridge
-    name: home-services
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
+  reverse-proxy:
+    name: reverse-proxy
