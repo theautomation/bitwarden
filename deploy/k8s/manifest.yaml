@@ -1,0 +1,309 @@
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: pv-iscsi-vaultwarden-db
+spec:
+  storageClassName: "freenas-iscsi-manual-csi"
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  csi:
+    driver: org.democratic-csi.node-manual
+    readOnly: false
+    fsType: xfs
+    volumeHandle: pv-iscsi-vaultwarden-db
+    volumeAttributes:
+      portal: storage-server.lan:3260
+      iqn: iqn.2005-10.org.freenas.ctl:vaultwarden-db
+      lun: "0"
+      node_attach_driver: iscsi
+      provisioner_driver: node-manual
+
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: pv-nfs-vaultwarden-data
+spec:
+  storageClassName: "freenas-nfs-manual-csi"
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - nfsvers=4
+    - nolock
+    - noatime
+  csi:
+    driver: org.democratic-csi.node-manual
+    readOnly: false
+    fsType: nfs
+    volumeHandle: pv-nfs-vaultwarden-data
+    volumeAttributes:
+      server: storage-server.lan
+      share: /mnt/r10_8tb/k8s/vaultwarden-data/
+      node_attach_driver: nfs
+      provisioner_driver: node-manual
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: pvc-iscsi-vaultwarden-db
+  namespace: tools
+  annotations:
+    volume.beta.kubernetes.io/storage-class: "freenas-iscsi-manual-csi"
+spec:
+  storageClassName: freenas-iscsi-manual-csi
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  volumeName: pv-iscsi-vaultwarden-db
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: pvc-nfs-vaultwarden-data
+  namespace: tools
+  annotations:
+    volume.beta.kubernetes.io/storage-class: "freenas-nfs-manual-csi"
+spec:
+  storageClassName: freenas-nfs-manual-csi
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  volumeName: pv-nfs-vaultwarden-data
+
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: vaultwarden-mysql-secrets
+  namespace: tools
+  labels:
+    app: vaultwarden
+data:
+  mysql-root-password: ""
+  mysql-username: ""
+  mysql-password: ""
+
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: vaultwarden
+  namespace: tools
+  labels:
+    app: vaultwarden
+data:
+  database-url: ""
+  admin-token: ""
+
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: vaultwarden-mysql
+  namespace: home-automation
+  labels:
+    app: vaultwarden
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: vaultwarden-mysql
+  template:
+    metadata:
+      labels:
+        app: vaultwarden-mysql
+    spec:
+      containers:
+        - name: vaultwarden-mysql
+          image: mysql:5.7
+          imagePullPolicy: Always
+          resources: {}
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-mysql-secrets
+                  key: mysql-root-password
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-mysql-secrets
+                  key: mysql-username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-mysql-secrets
+                  key: mysql-password
+            - name: MYSQL_DATABASE
+              value: vaultwarden
+          volumeMounts:
+            - name: vaultwarden-db
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: vaultwarden-db
+          persistentVolumeClaim:
+            claimName: pvc-iscsi-vaultwarden-db
+
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: vaultwarden
+  namespace: tools
+  labels:
+    app: vaultwarden
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vaultwarden
+  template:
+    metadata:
+      labels:
+        app: vaultwarden
+    spec:
+      serviceAccountName: default
+      securityContext:
+        fsGroup: 65534
+      containers:
+        - name: vaultwarden
+          image: "vaultwarden/server:1.25.0"
+          imagePullPolicy: IfNotPresent
+          resources: {}
+          securityContext:
+            runAsGroup: 65534
+            runAsUser: 65534
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+            - containerPort: 3012
+              protocol: TCP
+          env:
+            - name: ROCKET_PORT
+              value: "8080"
+            - name: SIGNUPS_ALLOWED
+              value: "false"
+            - name: SIGNUPS_VERIFY
+              value: "false"
+            - name: REQUIRE_DEVICE_EMAIL
+              value: "false"
+            - name: INVITATIONS_ALLOWED
+              value: "true"
+            - name: SHOW_PASSWORD_HINT
+              value: "false"
+            - name: WEBSOCKET_ENABLED
+              value: "true"
+            - name: WEB_VAULT_ENABLED
+              value: "true"
+            - name: SENDS_ALLOWED
+              value: "true"
+            - name: ORG_CREATION_USERS
+              value: "all"
+            - name: DB_CONNECTION_RETRIES
+              value: "15"
+            - name: DATABASE_MAX_CONNS
+              value: "10"
+            - name: ENABLE_DB_WAL
+              value: "false"
+            - name: DOMAIN
+              value: "https://bitwarden.theautomation.nl"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden
+                  key: database-url
+            - name: ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden
+                  key: admin-token
+            - name: EMERGENCY_ACCESS_ALLOWED
+              value: "false"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          volumeMounts:
+            - name: vaultwarden
+              mountPath: /data
+      volumes:
+        - name: vaultwarden
+          persistentVolumeClaim:
+            claimName: vaultwarden
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: vaultwarden
+  namespace: tools
+  labels:
+    app: vaultwarden
+spec:
+  selector:
+    app: vaultwarden
+  type: ClusterIP
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080
+    - name: websocket
+      protocol: TCP
+      port: 3012
+      targetPort: 3012
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: vaultwarden
+  namespace: tools
+  labels:
+    app: vaultwarden
+  annotations:
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: nginx-public
+  rules:
+    - host: "bitwarden.theautomation.nl"
+      http:
+        paths:
+          - path: "/notifications/hub"
+            backend:
+              service:
+                name: vaultwarden
+                port:
+                  number: 3012
+          - path: "/"
+            backend:
+              service:
+                name: vaultwarden
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - bitwarden.theautomation.nl
+      secretName: cloudflare-tls
