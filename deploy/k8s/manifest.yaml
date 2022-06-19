@@ -2,11 +2,11 @@
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: pv-iscsi-vaultwarden-db
+  name: pv-iscsi-vaultwarden-data
 spec:
   storageClassName: "freenas-iscsi-manual-csi"
   capacity:
-    storage: 5Gi
+    storage: 10Gi
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
@@ -14,46 +14,19 @@ spec:
     driver: org.democratic-csi.node-manual
     readOnly: false
     fsType: xfs
-    volumeHandle: pv-iscsi-vaultwarden-db
+    volumeHandle: pv-iscsi-vaultwarden-data
     volumeAttributes:
       portal: storage-server.lan:3260
-      iqn: iqn.2005-10.org.freenas.ctl:vaultwarden-db
+      iqn: iqn.2005-10.org.freenas.ctl:vaultwarden-data
       lun: "0"
       node_attach_driver: iscsi
-      provisioner_driver: node-manual
-
----
-kind: PersistentVolume
-apiVersion: v1
-metadata:
-  name: pv-nfs-vaultwarden-data
-spec:
-  storageClassName: "freenas-nfs-manual-csi"
-  capacity:
-    storage: 5Gi
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  mountOptions:
-    - nfsvers=4
-    - nolock
-    - noatime
-  csi:
-    driver: org.democratic-csi.node-manual
-    readOnly: false
-    fsType: nfs
-    volumeHandle: pv-nfs-vaultwarden-data
-    volumeAttributes:
-      server: storage-server.lan
-      share: /mnt/r10_8tb/k8s/vaultwarden-data/
-      node_attach_driver: nfs
       provisioner_driver: node-manual
 
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: pvc-iscsi-vaultwarden-db
+  name: pv-iscsi-vaultwarden-data
   namespace: tools
   annotations:
     volume.beta.kubernetes.io/storage-class: "freenas-iscsi-manual-csi"
@@ -63,103 +36,8 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 5Gi
-  volumeName: pv-iscsi-vaultwarden-db
-
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: pvc-nfs-vaultwarden-data
-  namespace: tools
-  annotations:
-    volume.beta.kubernetes.io/storage-class: "freenas-nfs-manual-csi"
-spec:
-  storageClassName: freenas-nfs-manual-csi
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 5Gi
-  volumeName: pv-nfs-vaultwarden-data
-
----
-kind: Secret
-apiVersion: v1
-metadata:
-  name: vaultwarden-mysql-secrets
-  namespace: tools
-  labels:
-    app: vaultwarden
-data:
-  mysql-root-password: ""
-  mysql-username: ""
-  mysql-password: ""
-
----
-kind: Secret
-apiVersion: v1
-metadata:
-  name: vaultwarden
-  namespace: tools
-  labels:
-    app: vaultwarden
-data:
-  database-url: ""
-  admin-token: ""
-
----
-kind: Deployment
-apiVersion: apps/v1
-metadata:
-  name: vaultwarden-mysql
-  namespace: home-automation
-  labels:
-    app: vaultwarden
-spec:
-  replicas: 1
-  strategy:
-    type: RollingUpdate
-  selector:
-    matchLabels:
-      app: vaultwarden-mysql
-  template:
-    metadata:
-      labels:
-        app: vaultwarden-mysql
-    spec:
-      containers:
-        - name: vaultwarden-mysql
-          image: mysql:5.7
-          imagePullPolicy: Always
-          resources: {}
-          ports:
-            - containerPort: 3306
-          env:
-            - name: MYSQL_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: vaultwarden-mysql-secrets
-                  key: mysql-root-password
-            - name: MYSQL_USER
-              valueFrom:
-                secretKeyRef:
-                  name: vaultwarden-mysql-secrets
-                  key: mysql-username
-            - name: MYSQL_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: vaultwarden-mysql-secrets
-                  key: mysql-password
-            - name: MYSQL_DATABASE
-              value: vaultwarden
-          volumeMounts:
-            - name: vaultwarden-db
-              mountPath: /var/lib/mysql
-      volumes:
-        - name: vaultwarden-db
-          persistentVolumeClaim:
-            claimName: pvc-iscsi-vaultwarden-db
+      storage: 10Gi
+  volumeName: pv-iscsi-vaultwarden-data
 
 ---
 kind: Deployment
@@ -221,36 +99,26 @@ spec:
             - name: DATABASE_MAX_CONNS
               value: "10"
             - name: ENABLE_DB_WAL
-              value: "false"
+              value: "true"
             - name: DOMAIN
               value: "https://bitwarden.theautomation.nl"
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: vaultwarden
-                  key: database-url
-            - name: ADMIN_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: vaultwarden
-                  key: admin-token
             - name: EMERGENCY_ACCESS_ALLOWED
               value: "false"
           livenessProbe:
             httpGet:
               path: /
-              port: http
+              port: 8080
           readinessProbe:
             httpGet:
               path: /
-              port: http
+              port: 8080
           volumeMounts:
             - name: vaultwarden
               mountPath: /data
       volumes:
         - name: vaultwarden
           persistentVolumeClaim:
-            claimName: vaultwarden
+            claimName: pv-iscsi-vaultwarden-data
 
 ---
 kind: Service
@@ -275,11 +143,25 @@ spec:
       targetPort: 3012
 
 ---
+kind: Service
+apiVersion: v1
+metadata:
+  name: vaultwarden
+  namespace: prd-ext
+  labels:
+    app: vaultwarden
+spec:
+  type: ExternalName
+  externalName: vaultwarden.tools.svc.cluster.local
+  ports:
+    - port: 80
+
+---
 kind: Ingress
 apiVersion: networking.k8s.io/v1
 metadata:
   name: vaultwarden
-  namespace: tools
+  namespace: prd-ext
   labels:
     app: vaultwarden
   annotations:
@@ -292,12 +174,14 @@ spec:
       http:
         paths:
           - path: "/notifications/hub"
+            pathType: Prefix
             backend:
               service:
                 name: vaultwarden
                 port:
                   number: 3012
           - path: "/"
+            pathType: Prefix
             backend:
               service:
                 name: vaultwarden
