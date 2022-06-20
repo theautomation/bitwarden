@@ -26,7 +26,7 @@ spec:
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: pv-iscsi-vaultwarden-data
+  name: pvc-iscsi-vaultwarden-data
   namespace: tools
   annotations:
     volume.beta.kubernetes.io/storage-class: "freenas-iscsi-manual-csi"
@@ -38,6 +38,27 @@ spec:
     requests:
       storage: 10Gi
   volumeName: pv-iscsi-vaultwarden-data
+
+---
+kind: SealedSecret
+apiVersion: bitnami.com/v1alpha1
+metadata:
+  name: vaultwarden-env
+  namespace: tools
+spec:
+  encryptedData:
+    admin_token: AgA3NtuoN9+C9p6xZVoWGzaLbXhgrxrdazpSk/+k4c/m5rQnejsea4wiJ765SHxPl3f11aIjI6aMWcEkYfavq6TPQdNU2YfqguJyW9ARMnD6Esx/arPQwEVjKm8KVFAb4ZwfNyodqSXWpXb6ZLYCU6cGHQAvhRtN+ipUbhL4UO2Ffq96ROxTZTX/Jj4xlSY0vz2RxqI7yN8UDQT86lpMRzla2ZOcSvEwqecv3+j1tz40xxowEiazE8jZroCsvUJ3z4eQOwo+bRZlkWLKLAUhq07OeOJiAWBkb4II1/rXAiY7aaGvFZe1k11GQMNSCCdR6/3ZhwFJvQ6wawrD9z6aymbWMriRhVX7uCnHYf+VqnA52YFBRimyKs7aKUTEJkhpnw9OuOOuVQMd8pnZ3lR+T0PQZzYjIDqy4yUinMKqGc500IanwG6jh7+Kq8Kwc78kgR7hlF24He6eh8MuPjZfj1K9q1LV0KsRAvK56u97yMMkTxrTte0TSewAsORbo4mVXe/lx6rYaO9l9AQrROYAPyisLO/uj0WiHBWL5p4ed44qqzA/leMAK5qbxnY4wUEBp64iFMpJRkDIrpAQnDi6rcPEmneV6AA4miPFxGI4e93uIP4yGTVTkieeYBKVJtniGu77MaVuSx1LL+2M8CnXfapCfM8R7YvE8yFO+L9syN43+J1Rh2fXsOcA7TTfKRnxnSRF27CqYlTGRDWfXzvdag==
+    smtp_from: AgC6x7dkkFyYz8kvEBac6Y37/n/QXaHM4xvscsSigMBNZ7nMrA6OvZiSP21B1lgo5LuFoy68iIGM9a7GQwad4cPT2SuA5HbJ2p0JOZPBrCezusX2H9i+62UTkIWcJSPP2cbLQ9WFO2t9rqXCUapbLGwbLL/FK9beSXYbVIiquEz9iNvs4eWbaBoDj2yv8GRbalCmAfYGjf9zUKTdhTJ7xg7fEqA9ugN2Rs43rIYTuRELXrnZ9PmQO+8bPaiE0ZhC5y0Ed+8bgtMI94ffCyaQDyR62Mqh2ggKw6QWwWlVC2aRRIpwtF66p82ZxnqNZcJElh23ReI4itqfPcRublxY8H1Kr76gU5ij22OLM6CJsZUZHkKtNU2yfEquzV5mV3+7qCznkohHlm6thjchnEBXVjfTDYVa/s1zZ966jVEM5DjeBY04drzlhaPcj+Vo9GhzwXo1viV6A4StuOvaivE25SbElEOpIXiZYgqYMv0eavBbZ8828ZBZMyBaNNIV14SkM4FMyfwTbKyzuxVpE4ddZ5WtahqcaZvBMqik3IRKNjnCjHP4skdg+N/pF+AI9kNYZd3ehusMd3CE3SRektwLFHdv5SC3Bqr4iEm2fzn58rZOlSm1Q5S+6m0IjNcTNVqhUx0LJnMaV2BrGExCEzBcFrYNIU3yg4M5ge3RpbLjEQs+zQYUXVCbJbxTya/Xtkyf6R8bdTQZ3Gc4tFVkJxjKhZaByL2pwmE=
+    smtp_host: AgAJZrMhmU79F04FsZArCL+iri6D3i3mR7xHtshJAby84Rknm/zpqG1ecS9sADOJHECRq6E2mj98WUJ8NHETIpQcSUpnaW1Zo1QKw3vRakYVQLOzLEMMEFH78+Y8LnfCZOXEQtNRpMxdP8bGZQ5qeVwKEj1cUDojN+OPiMAHLtY2Sk8/VIlkmXHdixdr2q59MNaZBSoMu8Np3uOX7uqLuytCNEluD2y6OHc2NmLSAjwwg2THol0h+mVW7rOterFQ5bPr0pRjVy48VAc6Va2TloFVmavN7IFVqsMVvrvZyJedP8+FyEfFaxwae7qgePKA9C1w6IScZWP9okWNxcBAfXm5zs/Pa8yNUtkui6UKFQhGOSMBTrqo7h4Ulb+s0r0P1/1kVqhuDYhOMfelVlTV88rCrX7sIuRq+qm8bAmePX7UhnUBkfrv9taUM79Sk7Pk4Gey+xfm3eX9WBpMUuNsQh7241Ev6eeJqFSSzWUMdWP+y7iOYNxICS99IZqbKlHsYlqVUD+R/Xj5cSZnKDQ9KBIr1GoGLt7oBAI9OrhwbakqegC9iIm6+1zfTFjSgeFCXXMl6mnkBNiyBS4KLavF+lhl9YSty0lMEiV41L8lJ8PSHgTBMbqFtvXXMWyY71qMV7sadOAa67PwJWdt8UT5o8jVL/soMtcUMfdBwLAqjulRT1/tkSkmnx3AM5C+3ThimGm83pXEL7rreda8okBYeA==
+    smtp_password: AgBspRuc5djke8eUN1iluvZQnNc0GEjfn9a0i7DpuzyzgUs3+0rKSXn6gR5gR1j0rxLwDwp0M9VWojybxJI99jMjiJi0m3CDO7Kq1+sHu1Hd8r08Keu481nwl26WJfXVhgAA7rvcKWCUO4BgLE23l/kifylKrPwjfmMYnVDLHsN+O7Ebv9cU9vaVKzce7A2PVbpTTOLpaZta5yWy04JOsiWzn/jzAy+sjNj07Uj9M+wprkXDHfN8P5BqBRcN2+Lm9UHcTjQFFEXh4NR2PMPAKVP9qnf9AEsIB18qAkeM7Dbj0HfZVM8Z2TikU7I6cjT+zmIYNEVzfoRjxb7pNdTA2glVehzhmwvo7mJXgDXYGvCJ85fSmoZyMXEL7UpZWLLOQDL0zbhkdH9oSOhAA05QDBDF4GO+ONK4x/qvHDf8lN6x0hixyQMEWd9i79+YJZL7Sa42D7X3+9RnzS3shBAGc2OrdUzbZJFCFw3Hk/VUwTlqQVcCWa/6P4ZT1ercXLDZV+gZcL+JZ2Iwhz49tbQU5trv2oWDdOgo6O6tPvnAmL82brV3YpnoRBnikpFNxj2CZtzkxXidql/8Hgqug8Op/UMNRsvRz3uH6BCoFGoBdNEaYv1udfz+Evn4c+MLf3ZcJYjqIqmhCuZFO+wSkETOQ8Dvf3ilVxGSomXDKHktKV7kJCKhn8M9BpQps/JXGSPz5phhFQ0zPBa80rACUDKz5G4c
+    smtp_username: AgCZosdZsoga3WQoHJ5Dxf0B99U35ixhCVFKtwyEl2kKFWMd4rtz8V6af3bST9LHi1Q7e37jEwqjJbAw1Q4D/c+GeZFU3THUpVIvPPQwWuA/5QTQBaxm1P+lpufSFN6cz96E5ion3+zf14wJab7L0bFXF3rBEznikJVVPgArERu4oREv6VKbJPgXuc5vf+SBFu+dSVEWMWNK3N84ZTSoAg8eq0mg9h8u6ZbTbja+NSa0qJA7XegHHd4gLffKc5sRZg5PIP1tdEwskYsQM9pCDyFf5wSrxeVfEHygkrHRaxZNptk9zvpZhzR1sTkfw9HoAe/nznMW2Ih1F1fTRPdAMc2M3lnaKMgLGQpXNYQAIrNGtdBK49Qk/FJDAZW36+TAzKbUVxH2EiNvps03z+aZMTCo+kViuvyURLgU3Sw7Ak5ldowPQW0zfr7O6NXQVWx8zGnZypiKQXQkFD3nE3rMQ5DxLotZR12j7mtDvyACtbStfqMM9/tEKaByBng2nsUhJViwbpiEHuBoeEM3LKaA/ZGv5aBWFxjtgitRZN8qHKUvmr1A18hhtcB08CZ+G+QBaZdFIvSIV4EmygvhmFB4eg+NU1ByRBovzGj+UvoMLbCQOUG68TJ+FGvGVMsLKfl6eT+7+GL6R4pB6xnQ65on2cq6IBAhRuqicsI1pl8mBKDPaYSX0jw/5B63t205lKjK6efYUQX+Ud/VR3duI2NM1TjIeWacPaw=
+  template:
+    type: Opaque
+    metadata:
+      name: vaultwarden-env
+      namespace: tools
+      labels:
+        app: vaultwarden
 
 ---
 kind: Deployment
@@ -59,33 +80,43 @@ spec:
     spec:
       serviceAccountName: default
       securityContext:
-        fsGroup: 65534
+        fsGroup: 1000
       containers:
         - name: vaultwarden
           image: "vaultwarden/server:1.25.0"
           imagePullPolicy: IfNotPresent
           resources: {}
           securityContext:
-            runAsGroup: 65534
-            runAsUser: 65534
+            runAsGroup: 1000
+            runAsUser: 1000
           ports:
             - containerPort: 8080
               protocol: TCP
             - containerPort: 3012
               protocol: TCP
           env:
-            - name: ROCKET_PORT
-              value: "8080"
+            - name: DATA_FOLDER
+              value: "data"
+            - name: DOMAIN
+              value: "https://bitwarden.theautomation.nl"
+            - name: DATABASE_MAX_CONNS
+              value: "10"
+            - name: IP_HEADER
+              value: "X-Real-IP"
+            - name: ENABLE_DB_WAL
+              value: "true"
             - name: SIGNUPS_ALLOWED
               value: "false"
             - name: SIGNUPS_VERIFY
+              value: "false"
+            - name: ROCKET_PORT
+              value: "8080"
+            - name: SHOW_PASSWORD_HINT
               value: "false"
             - name: REQUIRE_DEVICE_EMAIL
               value: "false"
             - name: INVITATIONS_ALLOWED
               value: "true"
-            - name: SHOW_PASSWORD_HINT
-              value: "false"
             - name: WEBSOCKET_ENABLED
               value: "true"
             - name: WEB_VAULT_ENABLED
@@ -96,14 +127,43 @@ spec:
               value: "all"
             - name: DB_CONNECTION_RETRIES
               value: "15"
-            - name: DATABASE_MAX_CONNS
-              value: "10"
-            - name: ENABLE_DB_WAL
-              value: "true"
-            - name: DOMAIN
-              value: "https://bitwarden.theautomation.nl"
             - name: EMERGENCY_ACCESS_ALLOWED
               value: "false"
+            - name: DISABLE_ADMIN_TOKEN
+              value: "false"
+            - name: SMTP_FROM_NAME
+              value: "Bitwarden | Theautomation"
+            - name: SMTP_SECURITY
+              value: "starttls"
+            - name: SMTP_PORT
+              value: "587"
+            - name: SMTP_TIMEOUT
+              value: "15"
+            - name: ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-env
+                  key: admin_token
+            - name: SMTP_FROM
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-env
+                  key: smtp_from
+            - name: SMTP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-env
+                  key: smtp_host
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-env
+                  key: smtp_password
+            - name: SMTP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-env
+                  key: smtp_username
           livenessProbe:
             httpGet:
               path: /
@@ -118,7 +178,7 @@ spec:
       volumes:
         - name: vaultwarden
           persistentVolumeClaim:
-            claimName: pv-iscsi-vaultwarden-data
+            claimName: pvc-iscsi-vaultwarden-data
 
 ---
 kind: Service
